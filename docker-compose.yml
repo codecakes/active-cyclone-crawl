@@ -1,0 +1,76 @@
+version: '3'
+
+services:
+  postgres:
+    restart: always
+    image: postgres:latest
+    # see: https://stackoverflow.com/a/60369496/2290820
+    env_file: web/.env
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  celery:
+    build: web
+    container_name: celeryc
+    command: celery -A backend worker -B --loglevel=DEBUG
+    volumes:
+      - ./web:/app
+    env_file: web/.env
+    links:
+      - redis
+
+  backend:
+    container_name: webc
+    command: sh -c "/wait && sh pre_start.sh && gunicorn backend.wsgi:application --worker-class=gevent -b :8000 -w 2 -n backend"
+    restart: always
+    build:
+      context: web
+      args:
+        - IS_WAIT=1
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    expose:
+    - 8000
+    ports:
+      - 8000:8000
+    links:
+      - postgres
+      - redis
+    volumes:
+      - ./web:/app
+    hostname: portcast-web
+    env_file: web/.env
+    environment:
+      - WAIT_HOSTS=postgres:5432,redis:6379
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=30
+      - WAIT_HOST_CONNECT_TIMEOUT=30
+    healthcheck:
+      interval: 1m30s
+      retries: 3
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/apihealth/?format=openapi-json
+      timeout: 10s
+
+volumes:
+  django-api:
+  pgdata:
+  redisdata:
