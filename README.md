@@ -27,3 +27,25 @@ If you prefer regular swagger schema look: http://localhost:8000/cyclones/
      
      Similarly, time parameters are supported in standard timestamp format.
 5. To test cd to /web and do `TEST_ENV=1 python3 manage.py test`
+
+
+## Env settings for local docker run
+
+A local `.env` file is needed to run the setup like this. Use the desired values for production and never include this file in version or during file transfers:
+
+```bash
+SECRET_KEY="1^1$)eoun(k_6@enm+d20#4=&9_^92kh)r^_e\!d*-&9=qjj7%"
+#TEST_ENV=1
+DEBUG_ENV=1
+DB_NAME=postgres
+DB_USER=postgres
+DB_USER_PWD=postgres
+DB_PORT=5432
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+DJANGO_SETTINGS_MODULE="backend.settings"
+DJANGO_ALLOWED_HOST="localhost"
+DB_HOST="postgres"
+PROJECT_NAME="backend"
+```
